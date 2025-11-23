@@ -55,9 +55,7 @@ signed main() {
 		if(abs(vh[i]) < speedThreshold) vh[i] = 0.0; // perhaps it wasnt handled that way... but it doesnt matter
 		// if(vh[i] >= 0) isClicking(false);
 		vh[i] *= clickD;
-		vh[i] += onGround ? walkSpeed * pow(0.6 / slip[1], 3) * (1.0 + springModifier) :
-				jumpMovementFactor * (1.0 + springModifier);
-		vh[i] *= 0.98;
+		vh[i] += (onGround ? walkSpeed * pow(0.6 / slip[1], 3) * (1.0 + springModifier) : jumpMovementFactor * (1.0 + springModifier)) * 0.98;
 		s += vh[i];
 
 		if(!onGround) {
