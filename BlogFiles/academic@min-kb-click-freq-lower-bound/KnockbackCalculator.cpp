@@ -1,78 +1,62 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+
+class entity {
+    bool on_ground;
+    double s, h;
+    double motion_h, motion_y;
+    double click_sd;
+    
+public:
+    bool   isOnGround()                { return on_ground = h <= 0; }
+    double isClicking(const bool &val) { return click_sd = val ? 0.6 : 1.0; }
+    double getMotionH()                { return motion_h; }
+    double getSpatium()                { return s; }
+    void move(const int &ticks)        {
+        static constexpr double mult = 0.91,
+                                spring_modifier = 0.3,
+                                // walkSpeed = 0.1,
+                                // speedThreshold = 0.05,
+                                // jumpMovementFactor = 0.02;
+                                resist_coeff[] = {0.02, 0.05, 0.1};
+        static constexpr double slip[] = {1.0, 0.6};
+        static constexpr double speed_threshold = 0.005;
+
+        isOnGround();
+
+        if(motion_h >= 0) isClicking(false);
+        motion_h *= mult * slip[on_ground] * click_sd;
+        motion_h += (on_ground ?
+                    resist_coeff[2] * pow(0.6 / slip[1], 3) :
+                    resist_coeff[0]
+                    ) * (1.0 + spring_modifier) * 0.98;
+        s += motion_h;
+
+        if(!on_ground) {
+            motion_y -= 0.08;
+            motion_y *= 0.98;
+            if(abs(motion_y) <= speed_threshold) motion_y = 0.0;
+        }
+        h += motion_y;
+        if(h < 0.0) h = 0.0;
+    }
+
+    entity(const double &motion_h = 0.0, const double &motion_y = 0.0, const bool &on_ground = true, const bool &is_clicking = false): s(0.0), h(0.0), motion_h(motion_h), motion_y(motion_y), on_ground(on_ground), click_sd(isClicking(is_clicking)) {}
+};
+
 using namespace std;
 
-double slip[2];
-double mult;
-double walkSpeed;
-double springModifier;
-double jumpMovementFactor;
-double speedThreshold;
-
-double clickD;
-
-double vh[2];
-double vy[2];
-
-double s, h;
-
-void init() {
-	slip[0] = 1.0, slip[1] = 0.6;
-	mult = 0.91;
-	walkSpeed = 0.1;
-	springModifier = 0.3;
-	jumpMovementFactor = 0.02;
-	speedThreshold = 0.005;
-	clickD = 1.0;
-	s = 0.0;
-	h = 0.0;
-}
-
-void setInitialVelH(double val) { vh[0] = val; }
-void setInitialVelY(double val) { vy[0] = val; }
-void isClicking(bool val) { clickD = val ? 0.6 : 1.0; }
-bool isOnGround() { return h <= 0; }
-
-void tick0(double VelH = 0.0, double VelY = 0.3622, bool clicking = false) {
-	setInitialVelH(VelH);
-	setInitialVelY(VelY);
-	isClicking(clicking);
-	h = VelY;
-}
-
 signed main() {
-	init();
-	tick0(-0.8835, 0.3622, true); // spring
-	// tick0(-0.8835 * 0.6, 0.3622, true); // not spring
-	for(int ticks = 1; ; ++ticks) {
-		int i = ticks % 2, j = (ticks + 1) % 2;
-		bool onGround = isOnGround();
+    entity player(-0.8835, 0.3622, true, true);
 
-		if(ticks != 1 && vh[i] == vh[j] && onGround) break;
-
-		vh[i] = vh[j] * slip[onGround] * mult;
-		if(abs(vh[i]) < speedThreshold) vh[i] = 0.0; // perhaps it wasnt handled that way... but it doesnt matter
-		// if(vh[i] >= 0) isClicking(false);
-		vh[i] *= clickD;
-		vh[i] += (onGround ? walkSpeed * pow(0.6 / slip[1], 3) * (1.0 + springModifier) : jumpMovementFactor * (1.0 + springModifier)) * 0.98;
-		s += vh[i];
-
-		if(!onGround) {
-			vy[i] = (vy[j] - 0.08) * 0.98;
-			if(abs(vy[i]) < speedThreshold) vy[i] = 0.0; // the same...
-			h += vy[i];
-			if(h < 0) h = 0;
-		}
-
-		cout << "[TICK " << ticks << "]";
-		cout << " " << vh[i] << fixed << setprecision(6);
-		// cout << " " << vh[i] * 20 << fixed << setprecision(6);
-
-		cout << " " << s;
-
-		cout << " " << (onGround ? "onGround" : "");
-		cout << '\n';
-	}
-	return 0;
+    double motion_h[2] = {0.0, 0.0};
+    for(int ticks = 1; ; ++ticks) {
+        int i = ticks & 1, j = !i;
+        player.move(ticks);
+        if((motion_h[i] = player.getMotionH()) == motion_h[j] && ticks != 1 && player.isOnGround()) break;
+        
+        cout << "[tick " << ticks << "] " << motion_h[i] << " " << player.getSpatium() << "\n";
+    }
+    return 0;
 }
