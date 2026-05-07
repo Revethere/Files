@@ -27,6 +27,7 @@ public:
 
         if(motion_h >= 0) isClicking(false);
         motion_h *= mult * slip[on_ground] * click_sd;
+        if(abs(motion_h) < speed_threshold) motion_h = 0.0;
         motion_h += (on_ground ?
                     resist_coeff[2] * pow(0.6 / slip[1], 3) :
                     resist_coeff[0]
@@ -36,7 +37,7 @@ public:
         if(!on_ground) {
             motion_y -= 0.08;
             motion_y *= 0.98;
-            if(abs(motion_y) <= speed_threshold) motion_y = 0.0;
+            if(abs(motion_y) < speed_threshold) motion_y = 0.0;
         }
         h += motion_y;
         if(h < 0.0) h = 0.0;
