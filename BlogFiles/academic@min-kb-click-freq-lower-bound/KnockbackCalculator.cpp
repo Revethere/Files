@@ -1,6 +1,11 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <fstream>
+#include <vector>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 class entity {
     bool on_ground;
@@ -46,9 +51,21 @@ public:
     entity(const double &motion_h = 0.0, const double &motion_y = 0.0, const bool &on_ground = true, const bool &is_clicking = false): s(0.0), h(0.0), motion_h(motion_h), motion_y(motion_y), on_ground(on_ground), click_sd(isClicking(is_clicking)) {}
 };
 
+auto buildFileName() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm *local = std::localtime(&t);
+
+    std::ostringstream oss;
+    oss << "result_" << std::put_time(local, "%m%d_%H%M") << ".csv";
+    return oss;
+}
+
 using namespace std;
 
 signed main() {
+    ofstream file(buildFileName().str());
+
     entity player(-0.8835, 0.3622, true, true);
 
     double motion_h[2] = {0.0, 0.0};
@@ -57,7 +74,9 @@ signed main() {
         player.move(ticks);
         if((motion_h[i] = player.getMotionH()) == motion_h[j] && ticks != 1 && player.isOnGround()) break;
         
-        cout << "[tick " << ticks << "] " << motion_h[i] << " " << player.getSpatium() << "\n";
+        file << "tick " << ticks << "," << motion_h[i] << "," << player.getSpatium() << "\n";
     }
+
+    file.close();
     return 0;
 }
